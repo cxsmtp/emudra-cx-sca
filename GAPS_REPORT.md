@@ -30,6 +30,7 @@ it with scan IDs and finding data, not assertion.
 | 5 | `90b69e5f` | e2faa4d | sca, containers | 125 | Dockerfile (ca-certificates + libnss3) |
 | 6 | `874b60f2` | 1ef7a6e | sca | 11 | CycloneDX SBOM in source tree (ignored) |
 | 7 | `936571a6` | SBOM import | sca | 11 | **CycloneDX SBOM via Checkmarx SBOM import** |
+| 8 | `f987a60f` | d6735ee | containers | 651 | **Strategy test: Ubuntu buildpack-deps:jammy (USN-8944-1)** |
 
 Dashboard: `https://deu.ast.checkmarx.net/projects/9a24e485-1327-4810-b5d3-b4e71be80f03/scans?branch=main&id=<scanId>`
 
@@ -153,6 +154,45 @@ resolves, which is itself the gap.)
 **Verdict: NEGATIVE across SCA, containers, AND SBOM import.** No Checkmarx
 surface detected any eMudhra exposure. The only detection path is the custom
 trust-store ruleset in this repo.
+
+---
+
+## Strategy to make Checkmarx DETECT it — can the distro/container path work?
+
+Goal flipped: find a Checkmarx surface that *does* catch eMudhra.
+
+**Attempt 1 — distro/container advisory (the strongest candidate).** Ubuntu
+issued `USN-8944-1`, which removes `emSign ECC Root CA – G3` from
+`ca-certificates` (the eMudhra incident), fixed `20260816ubuntu0.22.04.1` on
+jammy — a distro advisory matched by package version, exactly what a container
+scanner is built for. Scan 8 ran the containers engine against
+`buildpack-deps:jammy` (Ubuntu 22.04, ships ca-certificates).
+
+Result: **651 findings, all CVE-IDs — and a direct lookup for `USN-8944-1`
+returned `not_found` across all 651.** `CVE-2026-111943` also absent.
+
+Why it still fails: **`USN-8944-1` has no CVE.** Checkmarx's container findings
+are CVE-keyed, so a CVE-less distro advisory never surfaces — even though the
+engine resolved the image, enumerated ca-certificates, and flagged 651 other
+CVEs. Same root cause as every other gap: **no CVE, no finding.**
+
+**The strategy space collapses to one fact:** the only eMudhra identifier that
+carries a CVE is **`CVE-2026-111943` (Go stdlib)**. Certifi (GHSA), ca-certs
+(USN), and nss are all CVE-less, so no CVE-keyed Checkmarx engine — SCA,
+containers, or SBOM — can ever surface them. **The single path to a positive
+detection is matching `CVE-2026-111943`.**
+
+**Attempt 2 — Go stdlib via SBOM import (the one remaining shot).** The SBOM
+import (scan 7) proved Go matching works (jwt-go fired) but missed the stdlib
+because the component used `pkg:golang/std` — not the canonical Go-vuln module
+name `stdlib`. `sbom/go-stdlib-bom.json` retries with `pkg:golang/stdlib@1.27.1`
+(+ `go1.27.1` and `toolchain` variants), keeping lodash/jwt-go as controls.
+
+Success criterion: import it; if **`CVE-2026-111943` fires on a `stdlib`
+component**, Checkmarx CAN detect eMudhra (via SBOM + canonical stdlib id). If it
+does not fire while the controls do, then Checkmarx's feed does not map that CVE
+to the stdlib module, and **the verdict is final: not detectable by any
+Checkmarx surface — only the custom trust-store ruleset catches it.**
 
 ---
 

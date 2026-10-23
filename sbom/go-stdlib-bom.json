@@ -1,0 +1,55 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:9d41c7e8-2a63-4b50-bf19-emudhra0go0std",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-23T09:20:00Z",
+    "component": { "type": "application", "name": "emudhra-go-stdlib-test", "version": "1.0.0", "bom-ref": "root" },
+    "properties": [
+      { "name": "goal", "value": "Fire CVE-2026-111943 on the Go standard library. Controls (lodash, jwt-go) must fire to prove the import ran and Go matching works. If any stdlib variant fires CVE-2026-111943, Checkmarx CAN detect eMudhra." }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "lodash",
+      "version": "4.17.11",
+      "purl": "pkg:npm/lodash@4.17.11",
+      "bom-ref": "ctrl-lodash",
+      "properties": [{ "name": "role", "value": "control-should-fire (CVE-2019-10744 etc.)" }]
+    },
+    {
+      "type": "library",
+      "name": "github.com/dgrijalva/jwt-go",
+      "version": "3.2.0",
+      "purl": "pkg:golang/github.com/dgrijalva/jwt-go@v3.2.0",
+      "bom-ref": "ctrl-jwtgo",
+      "properties": [{ "name": "role", "value": "go-control-should-fire (CVE-2020-26160) — proves Go matching works" }]
+    },
+    {
+      "type": "library",
+      "name": "stdlib",
+      "version": "1.27.1",
+      "purl": "pkg:golang/stdlib@1.27.1",
+      "bom-ref": "target-stdlib-plain",
+      "properties": [{ "name": "role", "value": "TARGET: Go stdlib, canonical Go-vuln module name, plain version" }]
+    },
+    {
+      "type": "library",
+      "name": "stdlib",
+      "version": "go1.27.1",
+      "purl": "pkg:golang/stdlib@go1.27.1",
+      "bom-ref": "target-stdlib-goprefix",
+      "properties": [{ "name": "role", "value": "TARGET: Go stdlib, go-prefixed version" }]
+    },
+    {
+      "type": "application",
+      "name": "toolchain",
+      "version": "go1.27.1",
+      "purl": "pkg:golang/toolchain@go1.27.1",
+      "bom-ref": "target-toolchain",
+      "properties": [{ "name": "role", "value": "TARGET: Go toolchain module name variant" }]
+    }
+  ]
+}
