@@ -1,0 +1,4 @@
+# ecosystem=os  (brew leaves / apt list style)
+ca-certificates 2026-08-20
+nss 3.130.0
+openssl 3.3.2

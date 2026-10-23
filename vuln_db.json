@@ -1,0 +1,56 @@
+{
+  "advisory_id": "EMUDHRA-CA-2026-10",
+  "title": "eMudhra intermediate CA key compromise — clients still trusting the eight compromised intermediates",
+  "disclosed": "2026-10-20",
+  "revoked": "2026-10-18",
+  "rules": [
+    {
+      "ecosystem": "go",
+      "package": "stdlib",
+      "match": "go_toolchain",
+      "cve": "CVE-2026-111943",
+      "fixed": { "1.27": "1.27.3", "1.26": "1.26.10" },
+      "min_safe_minor": "1.26",
+      "note": "Any 1.27.x<1.27.3, 1.26.x<1.26.10, or <=1.25.x still accepts a chain containing one of the eight keys.",
+      "confidence": "certain"
+    },
+    {
+      "ecosystem": "pypi",
+      "package": "certifi",
+      "match": "date_version",
+      "fixed": "2026.10.19",
+      "note": "2026.10.19 drops emSign ECC Root CA - G3 from the bundle.",
+      "confidence": "certain"
+    },
+    {
+      "ecosystem": "os",
+      "package": "ca-certificates",
+      "match": "brew_date_version",
+      "fixed": "2026-09-25_1",
+      "note": "Excludes emSign ECC Root CA - G3, emSign Root TLS CA - G3 and AAA Certificate Services by public key.",
+      "confidence": "certain"
+    },
+    {
+      "ecosystem": "os",
+      "package": "nss",
+      "match": "semver",
+      "fixed": "3.131.1",
+      "note": "OneCRL / NSS trusted-cert list update.",
+      "confidence": "certain"
+    }
+  ],
+  "pending_confirmation": [
+    { "ecosystem": "npm", "package": "electron", "reason": "patched versions available, exact boundary unconfirmed" },
+    { "ecosystem": "cargo", "package": "webpki-roots", "reason": "patched, version unconfirmed" },
+    { "ecosystem": "os", "package": "ca_root_nss", "platform": "freebsd", "reason": "pending as of 2026-10-21" },
+    { "ecosystem": "npm", "package": "bun", "reason": "pending as of 2026-10-21" }
+  ],
+  "compromised_intermediates": [
+    "EM DV TLS CA - G3B",
+    "EM DV TLS CA - G3C",
+    "EM OV TLS CA - G3C",
+    "emSign ECC Root CA - G3",
+    "emSign Root TLS CA - G3",
+    "emSign Root CA - G1"
+  ]
+}

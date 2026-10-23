@@ -1,0 +1,14 @@
+# generated, reproducible artifacts
+out/
+*.tar.gz
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/
