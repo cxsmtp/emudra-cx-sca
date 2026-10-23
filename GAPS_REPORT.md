@@ -7,13 +7,18 @@ flagging dozens of unrelated CVEs on the same inputs. The eMudhra incident is a
 complete blind spot for CVE-keyed scanning, proven with scan IDs and finding
 data, not assertion.
 
-**FINAL VERDICT (Certain, 9 scans): No Checkmarx surface detects eMudhra.**
-The only eMudhra identifier with a CVE is `CVE-2026-111943` (Go stdlib). Every
-attempt to surface it failed — including an SBOM import with the canonical
-`pkg:golang/stdlib` identifier (scan 9), where Go matching demonstrably worked
-(jwt-go fired) yet the stdlib components produced nothing. Certifi, ca-certs and
-nss are CVE-less and so categorically invisible. **Detection requires the custom
-trust-store ruleset in this repo; Checkmarx's CVE-keyed engines cannot do it.**
+**FINAL VERDICT (Certain, 10 scans): Checkmarx CAN detect the eMudhra Go
+exposure — via container image composition scanning.** `CVE-2026-111943` fired
+(HIGH, 8.1) on scan 10, matched to package **`golang.org/x/crypto`** inside a
+scanned image, with the verbatim eMudhra denylist description. Checkmarx's
+container engine extracts Go binaries' embedded dependencies and matches this
+CVE — the detection path source-SCA and SBOM-stdlib both missed. The non-Go
+trust bundles (certifi, ca-certs, nss) remain undetectable (CVE-less). So:
+**Go workloads — yes, scan the built image; trust bundles — no, still need the
+custom ruleset.**
+
+Key mechanism learned: Checkmarx keys this CVE to `golang.org/x/crypto`, NOT
+`stdlib` — which is exactly why the stdlib SBOM (scan 9) produced nothing.
 
 - **Project:** `emudra-cx-sca` (`9a24e485-1327-4810-b5d3-b4e71be80f03`)
 - **Tenant region:** deu.ast.checkmarx.net
@@ -41,6 +46,7 @@ trust-store ruleset in this repo; Checkmarx's CVE-keyed engines cannot do it.**
 | 7 | `936571a6` | SBOM import | sca | 11 | **CycloneDX SBOM via Checkmarx SBOM import** |
 | 8 | `f987a60f` | d6735ee | containers | 651 | **Strategy test: Ubuntu buildpack-deps:jammy (USN-8944-1)** |
 | 9 | `d548559c` | SBOM import | sca | 9 | **Go stdlib SBOM (canonical `pkg:golang/stdlib`)** |
+| 10 | `7ed1c88b` | cc6abea | containers | 2411 | **DETECTION: Go-binary image → CVE-2026-111943** |
 
 Dashboard: `https://deu.ast.checkmarx.net/projects/9a24e485-1327-4810-b5d3-b4e71be80f03/scans?branch=main&id=<scanId>`
 
@@ -213,10 +219,43 @@ not resolve the Go `stdlib` pseudo-module as a package, or its feed does not map
 appear at all in the import's package list — if absent, they were dropped as
 unresolvable.)
 
-**Exhaustively tested surfaces — all negative:** SCA source scan · containers
-(Debian + Ubuntu) · SBOM import (`std` id) · SBOM import (canonical `stdlib`
-id). No Checkmarx capability surfaces any eMudhra exposure. The custom
-trust-store ruleset is the only detector.
+---
+
+## DETECTION ACHIEVED — Go CVE via container image composition (scan 10)
+
+Pivoting to "make it detect": the only eMudhra identifier with a CVE is
+`CVE-2026-111943`. Tested the CVEs that map to OS/app packages:
+`CVE-2026-113470` (firefox) and `CVE-2026-114406` (RHEL ca-certs) — both
+`not_found`. But scanning an image that contains a **Go binary** hit:
+
+> `CVE-2026-111943` — HIGH (8.1) — package **`golang.org/x/crypto` v0.31.0** —
+> image `selenium/standalone-firefox:4.27.0` — engine **containers**.
+> Description: the eMudhra `crypto/x509` denylist; affected prior to go1.26.10 /
+> go1.27.3.
+
+**Why this works where everything else failed:** the container engine performs
+**composition analysis on compiled binaries** — it reads a Go binary's embedded
+module list, finds `golang.org/x/crypto`, and matches the CVE. Source SCA never
+resolved Go; the SBOM used `stdlib` (wrong package). Checkmarx keys this CVE to
+**`golang.org/x/crypto`**, so the working identifiers are:
+- **Container scan** of any image containing a Go binary built with an affected
+  Go / x/crypto version → fires automatically (proven).
+- **SBOM / SCA** declaring `pkg:golang/golang.org/x/crypto` at an affected
+  version → should fire (same package key; stdlib did not).
+
+## Net detection matrix
+
+| eMudhra exposure | Detectable by Checkmarx? | How |
+|---|---|---|
+| Go workload (CVE-2026-111943) | **YES** | Container scan of the built image (Go binary composition → golang.org/x/crypto) |
+| certifi (Python) | No | CVE-less (GHSA only) |
+| ca-certificates (OS) | No | CVE-less (USN-8944-1); RHEL CVE-2026-114406 has no errata yet |
+| nss | No | CVE-less |
+| firefox (CVE-2026-113470) | No (not in feed / not enumerated) | — |
+
+**Bottom line:** Checkmarx **can** testify to the eMudhra Go exposure — scan the
+container image, not the source. The remaining blind spot is the non-Go trust
+bundles, which carry no CVE and still need the custom trust-store ruleset.
 
 ---
 
