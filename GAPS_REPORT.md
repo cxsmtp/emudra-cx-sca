@@ -28,7 +28,8 @@ it with scan IDs and finding data, not assertion.
 | 3 | `6090cff4` | 5e5ff22 | sca | 11 | Go + valid go.sum (jwt-go, CVE-2020-26160) |
 | 4 | `611844fd` | 8701f4d | sca | 11 | Go buildable root module + main.go |
 | 5 | `90b69e5f` | e2faa4d | sca, containers | 125 | Dockerfile (ca-certificates + libnss3) |
-| 6 | `874b60f2` | 1ef7a6e | sca | 11 | CycloneDX SBOM in source tree |
+| 6 | `874b60f2` | 1ef7a6e | sca | 11 | CycloneDX SBOM in source tree (ignored) |
+| 7 | `936571a6` | SBOM import | sca | 11 | **CycloneDX SBOM via Checkmarx SBOM import** |
 
 Dashboard: `https://deu.ast.checkmarx.net/projects/9a24e485-1327-4810-b5d3-b4e71be80f03/scans?branch=main&id=<scanId>`
 
@@ -121,8 +122,37 @@ Two conclusions:
   is Gap A — whether an explicit `golang` toolchain component makes CVE-2026-111943
   matchable — and that requires Checkmarx's SBOM import path to test.
 
-**Verdict: INCONCLUSIVE for Go via SBOM (import path unavailable here);
-NEGATIVE for the bundle packages (same feed, no CVE to match).**
+---
+
+## Gap D-resolved — SBOM IMPORT run (scan 7, `936571a6`): the decisive test
+
+The SBOM was imported through Checkmarx's SBOM analysis (`sourceType: sbom`).
+This time it was analysed — and across every ecosystem:
+
+**Controls all fired (proves the import works):**
+- lodash 4.17.11 → CVE-2019-10744, CVE-2026-4800 (both critical), CVE-2020-8203,
+  CVE-2021-23337, CVE-2020-28500, CVE-2026-2950 (`Npm-lodash-4.17.11`)
+- requests 2.32.3 → CVE-2024-47081 (`Pypi` pkg)
+- **jwt-go v3.2.0 → CVE-2020-26160** (`Go-github.com/dgrijalva/jwt-go-v3.2.0`) —
+  Go-ecosystem matching via SBOM is confirmed working.
+
+**Every eMudhra target still produced nothing:**
+- certifi 2026.8.30 → no finding
+- `go` / `golang-toolchain` 1.27.1 → **no CVE-2026-111943**, despite a `golang`
+  purl *and* a `cpe:2.3:a:golang:go:1.27.1`, and despite Go matching working
+  (jwt-go fired)
+- ca-certificates / nss → no finding
+
+**This is the decisive result.** Go matching is not the blocker — a real Go
+module CVE fired. Yet the eMudhra Go toolchain CVE did not surface even with the
+toolchain declared explicitly. (Open nuance: the Go *stdlib* may not be modelled
+as a matchable package under `pkg:golang/std`; check the import's package list —
+if `go/std/golang` is absent there, the stdlib simply isn't a component Checkmarx
+resolves, which is itself the gap.)
+
+**Verdict: NEGATIVE across SCA, containers, AND SBOM import.** No Checkmarx
+surface detected any eMudhra exposure. The only detection path is the custom
+trust-store ruleset in this repo.
 
 ---
 
