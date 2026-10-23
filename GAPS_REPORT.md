@@ -28,6 +28,7 @@ it with scan IDs and finding data, not assertion.
 | 3 | `6090cff4` | 5e5ff22 | sca | 11 | Go + valid go.sum (jwt-go, CVE-2020-26160) |
 | 4 | `611844fd` | 8701f4d | sca | 11 | Go buildable root module + main.go |
 | 5 | `90b69e5f` | e2faa4d | sca, containers | 125 | Dockerfile (ca-certificates + libnss3) |
+| 6 | `874b60f2` | 1ef7a6e | sca | 11 | CycloneDX SBOM in source tree |
 
 Dashboard: `https://deu.ast.checkmarx.net/projects/9a24e485-1327-4810-b5d3-b4e71be80f03/scans?branch=main&id=<scanId>`
 
@@ -95,6 +96,33 @@ eMudhra/emSign finding**, because the eMudhra fix (`ca-certificates 2026-09-25_1
 
 **Verdict: CONFIRMED.** Even the engine that *does* see ca-certificates/nss has
 no eMudhra entry to report.
+
+---
+
+## Gap D — SBOM analysis (attempted): not reachable via source scan, and feed-bound anyway
+
+A CycloneDX SBOM (`sbom/bom.json`) was committed listing positive controls
+(`lodash 4.17.11` → CVE-2019-10744 critical, `requests 2.32.3`, `jwt-go 3.2.0`
+→ CVE-2020-26160) plus the eMudhra targets (certifi 2026.8.30, Go stdlib/
+toolchain 1.27.1, ca-certificates, nss).
+
+Scan 6 returned the **same 11 Python CVEs, zero criticals** — the SBOM controls
+did not fire. A normal SCA **source scan does not ingest a CycloneDX `bom.json`**
+from the tree; Checkmarx's SBOM analysis is a separate import flow (UI / dedicated
+API) not exposed through the CxMCP tools used here, so it could not be driven in
+this loop.
+
+Two conclusions:
+- **Not reachable here:** SBOM risk analysis isn't triggered by committing an SBOM
+  and running SCA; it needs the explicit import feature.
+- **Even if reached, feed-bound:** SBOM analysis is still CVE/advisory matching
+  against the same database. For certifi/ca-certificates/nss (no eMudhra package
+  CVE) it would still report nothing. The single open question SBOM could answer
+  is Gap A — whether an explicit `golang` toolchain component makes CVE-2026-111943
+  matchable — and that requires Checkmarx's SBOM import path to test.
+
+**Verdict: INCONCLUSIVE for Go via SBOM (import path unavailable here);
+NEGATIVE for the bundle packages (same feed, no CVE to match).**
 
 ---
 
