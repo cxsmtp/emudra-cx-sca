@@ -165,6 +165,8 @@ def main():
                     "installed_version": version,
                     "fixed_version": rule["fixed"],
                     "cve": rule.get("cve"),
+                    "advisory_ref": rule.get("advisory_ref"),
+                    "real_sca_status": rule.get("real_sca_status"),
                     "label": "vulnerable" if vuln else "not_vulnerable",
                     "confidence": rule["confidence"],
                     "reason": reason,
@@ -196,8 +198,13 @@ def main():
     print("-" * 68)
     for s in samples:
         flag = "VULN" if s["label"] == "vulnerable" else "ok  "
-        cve = f" [{s['cve']}]" if s["cve"] else ""
-        print(f"[{flag}] {s['manifest']:30} {s['package']}=={s['installed_version']}{cve}")
+        ref = s["cve"] or s["advisory_ref"] or "-"
+        print(f"[{flag}] {s['manifest']:30} {s['package']}=={s['installed_version']:14} "
+              f"{ref:18} real-SCA: {s['real_sca_status']}")
+    print("-" * 68)
+    blind = sum(1 for s in samples if s["real_sca_status"] != "caught_by_feed")
+    print(f"NOTE: {blind}/{len(samples)} samples are NOT caught by a CVE-keyed SCA feed "
+          f"(this is the dataset's point).")
 
 
 if __name__ == "__main__":

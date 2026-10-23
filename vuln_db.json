@@ -3,39 +3,55 @@
   "title": "eMudhra intermediate CA key compromise — clients still trusting the eight compromised intermediates",
   "disclosed": "2026-10-20",
   "revoked": "2026-10-18",
+  "real_sca_status_legend": {
+    "caught_by_feed": "A package-level CVE/advisory exists; a CVE-keyed SCA feed matches the vulnerable version range.",
+    "blind_no_advisory": "No package CVE was issued; remediated by a trust-bundle content update. CVE-keyed SCA feeds have nothing to match, so they miss it.",
+    "blind_toolchain_unresolved": "A CVE exists, but it lives in the language stdlib/toolchain, which manifest-based SCA does not resolve as a package (observed: go.mod -> 0 packages)."
+  },
   "rules": [
     {
       "ecosystem": "go",
       "package": "stdlib",
       "match": "go_toolchain",
       "cve": "CVE-2026-111943",
+      "advisory_ref": "CVE-2026-111943",
+      "real_sca_status": "blind_toolchain_unresolved",
       "fixed": { "1.27": "1.27.3", "1.26": "1.26.10" },
       "min_safe_minor": "1.26",
-      "note": "Any 1.27.x<1.27.3, 1.26.x<1.26.10, or <=1.25.x still accepts a chain containing one of the eight keys.",
+      "note": "Any 1.27.x<1.27.3, 1.26.x<1.26.10, or <=1.25.x still accepts a chain containing one of the eight keys. CVE exists, but go.mod resolves to 0 packages in real SCA — the toolchain is not a resolved dependency.",
       "confidence": "certain"
     },
     {
       "ecosystem": "pypi",
       "package": "certifi",
       "match": "date_version",
+      "cve": null,
+      "advisory_ref": "GHSA-6q48-6c7w-9gw2",
+      "real_sca_status": "blind_no_advisory",
       "fixed": "2026.10.19",
-      "note": "2026.10.19 drops emSign ECC Root CA - G3 from the bundle.",
+      "note": "2026.10.19 drops emSign ECC Root CA - G3 from the bundle. No certifi CVE was issued for eMudhra; Python treats it as a bundle update (GHSA only). CVE-keyed SCA shows 0 risk on any certifi version for this incident.",
       "confidence": "certain"
     },
     {
       "ecosystem": "os",
       "package": "ca-certificates",
       "match": "brew_date_version",
+      "cve": null,
+      "advisory_ref": null,
+      "real_sca_status": "blind_no_advisory",
       "fixed": "2026-09-25_1",
-      "note": "Excludes emSign ECC Root CA - G3, emSign Root TLS CA - G3 and AAA Certificate Services by public key.",
+      "note": "Excludes emSign ECC Root CA - G3, emSign Root TLS CA - G3 and AAA Certificate Services by public key. Bundle content update, not a package CVE.",
       "confidence": "certain"
     },
     {
       "ecosystem": "os",
       "package": "nss",
       "match": "semver",
+      "cve": null,
+      "advisory_ref": null,
+      "real_sca_status": "blind_no_advisory",
       "fixed": "3.131.1",
-      "note": "OneCRL / NSS trusted-cert list update.",
+      "note": "OneCRL / NSS trusted-cert list update. No eMudhra package CVE against nss confirmed; distro advisories wrap the bundle change, not a code flaw.",
       "confidence": "certain"
     }
   ],

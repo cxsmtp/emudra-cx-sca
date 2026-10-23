@@ -25,6 +25,12 @@ shared as ground-truth learning data, so label integrity is the whole point.
 4. **Tests lock the boundaries.** If you change a boundary, update
    `tests/test_detect.py` in the same change and explain why in the commit.
 
+5. **`real_sca_status` is the headline, not a side field.** Every rule declares
+   whether a shipping CVE-keyed SCA feed actually catches it: `caught_by_feed`,
+   `blind_no_advisory`, or `blind_toolchain_unresolved`. A rule with no package
+   CVE must never be `caught_by_feed` (a test enforces this). The whole point of
+   the dataset is that eMudhra is mostly a blind spot — see `SCOPE.md`.
+
 ## Confirmed boundaries (primary-sourced)
 - Go stdlib crypto/x509 — fixed 1.27.3 (1.27.x) / 1.26.10 (1.26.x) — CVE-2026-111943
 - PyPI `certifi` — fixed 2026.10.19

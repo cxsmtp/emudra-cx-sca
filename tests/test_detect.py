@@ -94,5 +94,21 @@ class ConfidenceGate(unittest.TestCase):
             self.assertEqual(r["confidence"], "certain", f"active rule not certain: {r}")
 
 
+class RealScaStatusGate(unittest.TestCase):
+    ALLOWED = {"caught_by_feed", "blind_no_advisory", "blind_toolchain_unresolved"}
+
+    def test_every_rule_has_valid_status(self):
+        for r in detect.DB["rules"]:
+            self.assertIn(r.get("real_sca_status"), self.ALLOWED,
+                          f"rule missing/invalid real_sca_status: {r}")
+
+    def test_no_cve_implies_not_caught_by_feed(self):
+        # A rule with no package CVE cannot be labeled as caught by a CVE feed.
+        for r in detect.DB["rules"]:
+            if not r.get("cve"):
+                self.assertNotEqual(r.get("real_sca_status"), "caught_by_feed",
+                                    f"rule has no CVE but claims feed coverage: {r}")
+
+
 if __name__ == "__main__":
     unittest.main()
