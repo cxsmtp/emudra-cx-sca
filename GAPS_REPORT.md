@@ -1,10 +1,19 @@
 # Checkmarx SCA vs the eMudhra CA Compromise — Evidence Report
 
-**What this shows:** across six real Checkmarx One scans of this repo, Checkmarx
-detected **zero** eMudhra-related exposure — while correctly flagging dozens of
-unrelated CVEs on the same dependency trees and container image. The eMudhra
-incident is a blind spot for version/CVE-keyed scanning, and this report proves
-it with scan IDs and finding data, not assertion.
+**What this shows:** across **nine** real Checkmarx One scans of this repo —
+SCA, containers, and SBOM import, including a deliberate strategy to *make* it
+detect — Checkmarx detected **zero** eMudhra-related exposure, while correctly
+flagging dozens of unrelated CVEs on the same inputs. The eMudhra incident is a
+complete blind spot for CVE-keyed scanning, proven with scan IDs and finding
+data, not assertion.
+
+**FINAL VERDICT (Certain, 9 scans): No Checkmarx surface detects eMudhra.**
+The only eMudhra identifier with a CVE is `CVE-2026-111943` (Go stdlib). Every
+attempt to surface it failed — including an SBOM import with the canonical
+`pkg:golang/stdlib` identifier (scan 9), where Go matching demonstrably worked
+(jwt-go fired) yet the stdlib components produced nothing. Certifi, ca-certs and
+nss are CVE-less and so categorically invisible. **Detection requires the custom
+trust-store ruleset in this repo; Checkmarx's CVE-keyed engines cannot do it.**
 
 - **Project:** `emudra-cx-sca` (`9a24e485-1327-4810-b5d3-b4e71be80f03`)
 - **Tenant region:** deu.ast.checkmarx.net
@@ -31,6 +40,7 @@ it with scan IDs and finding data, not assertion.
 | 6 | `874b60f2` | 1ef7a6e | sca | 11 | CycloneDX SBOM in source tree (ignored) |
 | 7 | `936571a6` | SBOM import | sca | 11 | **CycloneDX SBOM via Checkmarx SBOM import** |
 | 8 | `f987a60f` | d6735ee | containers | 651 | **Strategy test: Ubuntu buildpack-deps:jammy (USN-8944-1)** |
+| 9 | `d548559c` | SBOM import | sca | 9 | **Go stdlib SBOM (canonical `pkg:golang/stdlib`)** |
 
 Dashboard: `https://deu.ast.checkmarx.net/projects/9a24e485-1327-4810-b5d3-b4e71be80f03/scans?branch=main&id=<scanId>`
 
@@ -191,8 +201,22 @@ name `stdlib`. `sbom/go-stdlib-bom.json` retries with `pkg:golang/stdlib@1.27.1`
 Success criterion: import it; if **`CVE-2026-111943` fires on a `stdlib`
 component**, Checkmarx CAN detect eMudhra (via SBOM + canonical stdlib id). If it
 does not fire while the controls do, then Checkmarx's feed does not map that CVE
-to the stdlib module, and **the verdict is final: not detectable by any
-Checkmarx surface — only the custom trust-store ruleset catches it.**
+to the stdlib module, and **the verdict is final.**
+
+**Result (scan 9, `d548559c`): the verdict is final — NOT DETECTED.** 9 findings,
+all controls: lodash (CVE-2026-4800, CVE-2019-10744 both critical, + 5 more) and
+**jwt-go CVE-2020-26160** (Go matching works). A direct lookup of
+`CVE-2026-111943` returned `not_found`; the `stdlib@1.27.1`, `stdlib@go1.27.1`
+and `toolchain@go1.27.1` components all produced nothing. Either Checkmarx does
+not resolve the Go `stdlib` pseudo-module as a package, or its feed does not map
+`CVE-2026-111943` to it. (Observable to disambiguate: whether `stdlib`/`toolchain`
+appear at all in the import's package list — if absent, they were dropped as
+unresolvable.)
+
+**Exhaustively tested surfaces — all negative:** SCA source scan · containers
+(Debian + Ubuntu) · SBOM import (`std` id) · SBOM import (canonical `stdlib`
+id). No Checkmarx capability surfaces any eMudhra exposure. The custom
+trust-store ruleset is the only detector.
 
 ---
 
