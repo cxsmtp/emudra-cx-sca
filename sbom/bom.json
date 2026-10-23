@@ -1,0 +1,73 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:7b3e2a10-9c4d-4f2a-8e1b-emudra0cx0sca",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-23T08:50:00Z",
+    "component": {
+      "type": "application",
+      "name": "emudra-cx-sca-sbom",
+      "version": "1.0.0",
+      "bom-ref": "root-app"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "requests",
+      "version": "2.32.3",
+      "purl": "pkg:pypi/requests@2.32.3",
+      "bom-ref": "comp-requests"
+    },
+    {
+      "type": "library",
+      "name": "lodash",
+      "version": "4.17.11",
+      "purl": "pkg:npm/lodash@4.17.11",
+      "bom-ref": "comp-lodash"
+    },
+    {
+      "type": "library",
+      "name": "github.com/dgrijalva/jwt-go",
+      "version": "3.2.0",
+      "purl": "pkg:golang/github.com/dgrijalva/jwt-go@v3.2.0",
+      "bom-ref": "comp-jwtgo"
+    },
+    {
+      "type": "library",
+      "name": "certifi",
+      "version": "2026.8.30",
+      "purl": "pkg:pypi/certifi@2026.8.30",
+      "bom-ref": "comp-certifi"
+    },
+    {
+      "type": "library",
+      "name": "stdlib",
+      "version": "1.27.1",
+      "purl": "pkg:golang/std@1.27.1",
+      "bom-ref": "comp-go-std"
+    },
+    {
+      "type": "application",
+      "name": "golang",
+      "version": "1.27.1",
+      "purl": "pkg:golang/toolchain@go1.27.1",
+      "bom-ref": "comp-go-toolchain"
+    },
+    {
+      "type": "library",
+      "name": "ca-certificates",
+      "version": "20210119",
+      "purl": "pkg:deb/debian/ca-certificates@20210119",
+      "bom-ref": "comp-cacerts"
+    },
+    {
+      "type": "library",
+      "name": "nss",
+      "version": "3.61",
+      "purl": "pkg:deb/debian/nss@3.61",
+      "bom-ref": "comp-nss"
+    }
+  ]
+}
